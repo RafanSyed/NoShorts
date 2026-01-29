@@ -1,17 +1,17 @@
 (() => {
   const SETTINGS = {
+    // Intent gate only on the YouTube home page
     useIntentGateOnHome: true,
     allowContinueAnyway: true,
 
     gateTitle: "Pause for 3 seconds.",
-    gateBody:
-      "Use YouTube intentionally: search for exactly what you need, or go to Subscriptions.",
+    gateBody: "Use YouTube intentionally: search for exactly what you need, or go to Subscriptions."
   };
 
   const DEBUG = false;
   const log = (...args) => DEBUG && console.log("[NoShorts+Focus]", ...args);
 
-  // --- Gate dismissal state (prevents re-adding after Continue)
+  // Prevent gate from reappearing after you dismiss/continue on the same URL
   let gateDismissedForUrl = null;
   const dismissGateForCurrentUrl = () => {
     gateDismissedForUrl = location.href;
@@ -20,8 +20,11 @@
 
   const isYouTubeHome = () => location.pathname === "/";
 
+  // ---------- Shorts removal ----------
   function removeShorts() {
-    document.querySelectorAll('a[href^="/shorts"]').forEach((a) => {
+    // 1) Remove anything that links to /shorts (items, nav, etc.)
+    document.querySelectorAll('a[href^="/shorts/"], a[href="/shorts"]').forEach((a) => {
+      // Left nav entries
       const guideEntry =
         a.closest("ytd-guide-entry-renderer") ||
         a.closest("ytd-mini-guide-entry-renderer");
@@ -30,79 +33,58 @@
         return;
       }
 
-      const tile =
+      // Feed/search/video list items
+      const container =
         a.closest("ytd-rich-item-renderer") ||
         a.closest("ytd-video-renderer") ||
         a.closest("ytd-grid-video-renderer") ||
         a.closest("ytd-compact-video-renderer") ||
         a.closest("ytd-reel-item-renderer");
-      if (tile) {
-        tile.remove();
-        return;
+
+      if (container) container.remove();
+    });
+
+    // 2) Remove reel shelves (these are often the big Shorts shelf blocks)
+    document.querySelectorAll("ytd-reel-shelf-renderer").forEach((el) => el.remove());
+
+    // 3) Remove rich sections that contain shorts links
+    document.querySelectorAll("ytd-rich-section-renderer").forEach((section) => {
+      if (section.querySelector('a[href^="/shorts/"], a[href="/shorts"]')) {
+        section.remove();
       }
     });
 
-    document.querySelectorAll("ytd-reel-shelf-renderer").forEach((el) => el.remove());
-    document.querySelectorAll("ytd-rich-section-renderer").forEach((section) => {
-      const hasShortsLink = section.querySelector('a[href^="/shorts/"], a[href="/shorts"]');
-      if (hasShortsLink) section.remove();
-    });
+    // 4) Remove any shelf/section whose visible header text is exactly "Shorts"
+    // This catches the Search "Shorts" shelf even when links are /watch?v=...
+    document
+      .querySelectorAll("ytd-shelf-renderer, ytd-rich-section-renderer, ytd-reel-shelf-renderer")
+      .forEach((el) => {
+        const titleEl =
+          el.querySelector("#title") ||
+          el.querySelector("h2") ||
+          el.querySelector("yt-formatted-string");
 
+        const headerText = (titleEl?.textContent || "").trim().toLowerCase();
+        if (headerText === "shorts") {
+          el.remove();
+        }
+      });
+
+    // 5) If user navigates to /shorts directly, bounce to home
     if (location.pathname.startsWith("/shorts")) {
       location.replace("https://www.youtube.com/");
     }
   }
 
-  // ---------------------------
-  // Tier 3: Reminder Banner
-  // ---------------------------
-  function ensureBanner() {
-    if (!SETTINGS.showReminderBanner) return;
-    if (document.getElementById("focus-reminder-banner")) return;
-
-    const banner = document.createElement("div");
-    banner.id = "focus-reminder-banner";
-    banner.textContent = SETTINGS.bannerText;
-
-    Object.assign(banner.style, {
-      position: "fixed",
-      top: "0",
-      left: "0",
-      right: "0",
-      zIndex: "999999",
-      padding: "10px 14px",
-      fontSize: "14px",
-      fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      background: "rgba(0,0,0,0.85)",
-      color: "white",
-      textAlign: "center",
-      backdropFilter: "blur(6px)",
-      borderBottom: "1px solid rgba(255,255,255,0.12)",
-    });
-
-    document.documentElement.appendChild(banner);
-
-    const style = document.createElement("style");
-    style.id = "focus-reminder-banner-padding";
-    style.textContent = `html { scroll-padding-top: 44px !important; } body { padding-top: 44px !important; }`;
-    document.documentElement.appendChild(style);
-  }
-
-  // ---------------------------
-  // Tier 3: Intent Gate (Home)
-  // ---------------------------
+  // ---------- Intent Gate ----------
   function ensureIntentGate() {
     if (!SETTINGS.useIntentGateOnHome) return;
     if (!isYouTubeHome()) return;
-
-    // If user already dismissed gate on this URL, don't re-add
     if (isGateDismissedForCurrentUrl()) return;
-
     if (document.getElementById("focus-intent-gate")) return;
 
     const overlay = document.createElement("div");
     overlay.id = "focus-intent-gate";
-
     Object.assign(overlay.style, {
       position: "fixed",
       inset: "0",
@@ -111,7 +93,7 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "18px",
+      padding: "18px"
     });
 
     const card = document.createElement("div");
@@ -123,7 +105,7 @@
       color: "#fff",
       border: "1px solid rgba(255,255,255,0.12)",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.35)"
     });
 
     const title = document.createElement("div");
@@ -139,7 +121,7 @@
       display: "flex",
       gap: "10px",
       flexWrap: "wrap",
-      justifyContent: "flex-end",
+      justifyContent: "flex-end"
     });
 
     const mkBtn = (label) => {
@@ -153,7 +135,7 @@
         background: "rgba(255,255,255,0.08)",
         color: "#fff",
         cursor: "pointer",
-        fontSize: "14px",
+        fontSize: "14px"
       });
       b.onmouseenter = () => (b.style.background = "rgba(255,255,255,0.14)");
       b.onmouseleave = () => (b.style.background = "rgba(255,255,255,0.08)");
@@ -185,7 +167,7 @@
       const btnContinue = mkBtn("Continue anyway");
       btnContinue.style.opacity = "0.85";
       btnContinue.onclick = () => {
-        dismissGateForCurrentUrl(); // <-- key fix
+        dismissGateForCurrentUrl();
         overlay.remove();
       };
       btnRow.appendChild(btnContinue);
@@ -195,18 +177,14 @@
     card.appendChild(body);
     card.appendChild(btnRow);
     overlay.appendChild(card);
-
     document.documentElement.appendChild(overlay);
   }
 
-  // ---------------------------
-  // Scheduler / Observer
-  // ---------------------------
+  // ---------- Scheduler / Observer ----------
   let scheduled = false;
 
   const sweep = () => {
     removeShorts();
-    ensureBanner();
     ensureIntentGate();
   };
 
@@ -219,16 +197,18 @@
     });
   };
 
+  // Initial
   scheduleSweep();
 
+  // DOM changes (YouTube SPA)
   const observer = new MutationObserver(() => scheduleSweep());
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
+  // URL changes (YouTube SPA)
   let lastUrl = location.href;
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      // new URL => gate can show again on home
       scheduleSweep();
     }
   }, 500);

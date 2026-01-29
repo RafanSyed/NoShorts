@@ -1,86 +1,79 @@
-/* Left nav: "Shorts" link (desktop) */
+/* ===========================
+   Remove Shorts navigation
+   =========================== */
 ytd-guide-entry-renderer a[title="Shorts"],
-ytd-mini-guide-entry-renderer a[title="Shorts"] {
+ytd-mini-guide-entry-renderer a[title="Shorts"],
+a[href="/shorts"],
+a[href^="/shorts/"] {
   display: none !important;
 }
 
-/* Shorts shelf on Home (big horizontal shelf) */
-ytd-rich-section-renderer:has(a[href^="/shorts"]) {
+/* Shorts shelf blocks / reels */
+ytd-reel-shelf-renderer,
+ytd-reel-item-renderer {
   display: none !important;
 }
 
-/* Shorts items sometimes appear as rich items linking to /shorts/... */
-ytd-rich-item-renderer:has(a[href^="/shorts/"]) {
-  display: none !important;
-}
-
-/* Shorts in search results / various lists */
+/* Shorts sections on home or elsewhere that contain /shorts/ links */
+ytd-rich-section-renderer:has(a[href^="/shorts/"]),
+ytd-rich-item-renderer:has(a[href^="/shorts/"]),
 ytd-video-renderer:has(a[href^="/shorts/"]),
 ytd-grid-video-renderer:has(a[href^="/shorts/"]),
 ytd-compact-video-renderer:has(a[href^="/shorts/"]) {
   display: none !important;
 }
 
-/* Shorts tab chips / pivot (sometimes shows as "Shorts") */
-yt-chip-cloud-chip-renderer[chip-style="STYLE_DEFAULT"]:has(yt-formatted-string:contains("Shorts")) {
-  display: none !important;
-}
-
-/* If YouTube shows a Shorts player rail somewhere */
-ytd-reel-shelf-renderer,
-ytd-reel-item-renderer {
-  display: none !important;
-}
-
-
 /* ===========================
-   TIER 2: Reduce dopamine hooks
+   Tier 2: Reduce dopamine hooks
    =========================== */
 
-/* A) Blur thumbnails everywhere (keeps layout but kills clickbait) */
-ytd-thumbnail img,
-ytd-thumbnail #thumbnail img,
-yt-image img {
-  filter: blur(10px) !important;
-  transform: scale(1.05) !important; /* prevents seeing edges when blurred */
-}
-
-/* Optional: instead of blur, you can fully hide thumbnails by using:
-ytd-thumbnail, ytd-thumbnail-renderer, yt-img-shadow { display:none !important; }
-*/
-
-/* B) Hide "Shorts" thumbnails already covered, but keep extra safety */
-a[href^="/shorts/"] ytd-thumbnail,
-a[href^="/shorts/"] ytd-thumbnail-renderer {
-  display: none !important;
-}
-
-/* C) Hide comments section (major doomscroll trap) */
+/* Hide comments */
 ytd-comments,
 #comments,
-ytd-comment-thread-renderer,
-ytd-item-section-renderer#sections:has(ytd-comments) {
+ytd-comment-thread-renderer {
   display: none !important;
 }
 
-/* D) Hide related videos sidebar (suggested videos / up next) */
+/* Hide suggested/related videos */
 #related,
 ytd-watch-next-secondary-results-renderer {
   display: none !important;
 }
 
-/* E) Hide "End screens" that pop up in the last seconds */
+/* Hide end screens */
 .ytp-endscreen-content,
 .ytp-ce-element,
 .ytp-ce-covering-overlay {
   display: none !important;
 }
 
+/* Disable hover previews */
+ytd-moving-thumbnail-renderer,
+ytd-player-inline-preview-renderer,
+ytd-inline-preview-player {
+  display: none !important;
+}
+
 /* ===========================
-   Thumbnails blur (strong + broad)
+   Thumbnails blur (idle + hover)
    =========================== */
 
-/* Blur most YouTube thumbnail images */
+/* Blur the thumbnail container so idle and hover stay blurred */
+ytd-thumbnail,
+ytd-thumbnail a#thumbnail,
+ytd-rich-grid-media #thumbnail,
+ytd-video-renderer #thumbnail,
+ytd-grid-video-renderer #thumbnail,
+ytd-compact-video-renderer #thumbnail,
+ytd-playlist-renderer #thumbnail,
+yt-img-shadow {
+  filter: blur(10px) !important;
+  transform: scale(1.03) !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+
+/* Blur any images inside too */
 ytd-thumbnail img,
 ytd-thumbnail yt-img-shadow img,
 yt-img-shadow img,
@@ -91,49 +84,4 @@ ytd-compact-video-renderer img,
 ytd-grid-video-renderer img {
   filter: blur(10px) !important;
   transform: scale(1.05) !important;
-}
-
-/* Sometimes the image is applied weirdly—blur the wrapper too */
-ytd-thumbnail,
-yt-img-shadow {
-  filter: blur(10px) !important;
-}
-
-/* ===========================
-   Thumbnails blur (idle + hover)
-   =========================== */
-
-/* Blur the whole thumbnail "box" so whatever YouTube swaps in stays blurred */
-ytd-thumbnail,
-ytd-thumbnail a#thumbnail,
-ytd-rich-grid-media #thumbnail,
-ytd-video-renderer #thumbnail,
-ytd-grid-video-renderer #thumbnail,
-ytd-compact-video-renderer #thumbnail,
-ytd-playlist-renderer #thumbnail {
-  filter: blur(10px) !important;
-  transform: scale(1.03) !important;
-  overflow: hidden !important;
-  border-radius: 12px !important;
-}
-
-/* Also blur any real images inside */
-ytd-thumbnail img,
-ytd-thumbnail yt-img-shadow img,
-yt-img-shadow img,
-img.yt-core-image {
-  filter: blur(10px) !important;
-  transform: scale(1.05) !important;
-}
-
-/* ===========================
-   Disable hover video previews
-   =========================== */
-
-/* YouTube hover previews often render in these */
-ytd-moving-thumbnail-renderer,
-ytd-thumbnail-overlay-time-status-renderer[overlay-style="MOVING_THUMBNAIL"],
-ytd-player-inline-preview-renderer,
-ytd-inline-preview-player {
-  display: none !important;
 }

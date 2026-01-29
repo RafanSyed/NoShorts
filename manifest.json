@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "No YouTube Shorts",
-  "version": "1.0.0",
-  "description": "Hides YouTube Shorts shelves and removes Shorts navigation links.",
+  "name": "No YouTube Shorts + Focus",
+  "version": "1.2.0",
+  "description": "Removes YouTube Shorts everywhere and reduces dopamine hooks (thumbnails/comments/related).",
   "permissions": [],
   "host_permissions": ["https://www.youtube.com/*"],
   "content_scripts": [

@@ -1,30 +1,41 @@
 /* ===========================
-   Remove Shorts navigation
+   Remove Shorts (nav + shelves + tiles)
    =========================== */
+
+/* Left nav shorts */
 ytd-guide-entry-renderer a[title="Shorts"],
-ytd-mini-guide-entry-renderer a[title="Shorts"],
+ytd-mini-guide-entry-renderer a[title="Shorts"] {
+  display: none !important;
+}
+
+/* Any direct shorts links */
 a[href="/shorts"],
 a[href^="/shorts/"] {
   display: none !important;
 }
 
-/* Shorts shelf blocks / reels */
+/* Shorts shelf blocks */
 ytd-reel-shelf-renderer,
 ytd-reel-item-renderer {
   display: none !important;
 }
 
-/* Shorts sections on home or elsewhere that contain /shorts/ links */
-ytd-rich-section-renderer:has(a[href^="/shorts/"]),
+/* Any tile/result that links to /shorts/... */
 ytd-rich-item-renderer:has(a[href^="/shorts/"]),
 ytd-video-renderer:has(a[href^="/shorts/"]),
 ytd-grid-video-renderer:has(a[href^="/shorts/"]),
-ytd-compact-video-renderer:has(a[href^="/shorts/"]) {
+ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+ytd-rich-section-renderer:has(a[href^="/shorts/"]) {
+  display: none !important;
+}
+
+/* Hide Shorts option in the Search Filters dialog (best-effort) */
+ytd-search-filter-group-renderer ytd-search-filter-renderer:has(a[title="Shorts"]) {
   display: none !important;
 }
 
 /* ===========================
-   Tier 2: Reduce dopamine hooks
+   Reduce dopamine hooks
    =========================== */
 
 /* Hide comments */
@@ -55,7 +66,7 @@ ytd-inline-preview-player {
 }
 
 /* ===========================
-   Thumbnails blur (idle + hover)
+   Blur thumbnails (idle + hover)
    =========================== */
 
 /* Blur the thumbnail container so idle and hover stay blurred */
@@ -81,7 +92,8 @@ img.yt-core-image,
 ytd-rich-grid-media img,
 ytd-video-renderer img,
 ytd-compact-video-renderer img,
-ytd-grid-video-renderer img {
+ytd-grid-video-renderer img,
+ytd-compact-video-renderer img {
   filter: blur(10px) !important;
   transform: scale(1.05) !important;
 }

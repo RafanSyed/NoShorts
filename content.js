@@ -1,28 +1,38 @@
 (() => {
   const SETTINGS = {
-    // Intent gate only on the YouTube home page
     useIntentGateOnHome: true,
     allowContinueAnyway: true,
-
     gateTitle: "Pause for 3 seconds.",
-    gateBody: "Use YouTube intentionally: search for exactly what you need, or go to Subscriptions."
+    gateBody: "Use YouTube intentionally: search for exactly what you need, or go to Subscriptions.",
   };
-
-  const DEBUG = false;
-  const log = (...args) => DEBUG && console.log("[NoShorts+Focus]", ...args);
 
   // Prevent gate from reappearing after you dismiss/continue on the same URL
   let gateDismissedForUrl = null;
-  const dismissGateForCurrentUrl = () => {
-    gateDismissedForUrl = location.href;
-  };
+  const dismissGateForCurrentUrl = () => (gateDismissedForUrl = location.href);
   const isGateDismissedForCurrentUrl = () => gateDismissedForUrl === location.href;
 
   const isYouTubeHome = () => location.pathname === "/";
 
-  // ---------- Shorts removal ----------
+  // --- Force search filter to Videos only (removes Shorts from search results)
+  function enforceVideoSearchFilter() {
+    if (location.pathname !== "/results") return;
+
+    const url = new URL(location.href);
+    const q = url.searchParams.get("search_query");
+    if (!q) return;
+
+    // "Videos" filter param on YouTube search
+    const VIDEOS_SP = "EgIQAQ%3D%3D";
+
+    if (url.searchParams.get("sp") === VIDEOS_SP) return;
+
+    url.searchParams.set("sp", VIDEOS_SP);
+    location.replace(url.toString());
+  }
+
+  // --- Remove Shorts UI/content
   function removeShorts() {
-    // 1) Remove anything that links to /shorts (items, nav, etc.)
+    // Remove direct Shorts links & their containers
     document.querySelectorAll('a[href^="/shorts/"], a[href="/shorts"]').forEach((a) => {
       // Left nav entries
       const guideEntry =
@@ -33,50 +43,40 @@
         return;
       }
 
-      // Feed/search/video list items
-      const container =
+      // Remove only tile-level renderers (safe)
+      const tile =
         a.closest("ytd-rich-item-renderer") ||
         a.closest("ytd-video-renderer") ||
         a.closest("ytd-grid-video-renderer") ||
         a.closest("ytd-compact-video-renderer") ||
         a.closest("ytd-reel-item-renderer");
 
-      if (container) container.remove();
+      if (tile) tile.remove();
     });
 
-    // 2) Remove reel shelves (these are often the big Shorts shelf blocks)
-    document.querySelectorAll("ytd-reel-shelf-renderer").forEach((el) => el.remove());
-
-    // 3) Remove rich sections that contain shorts links
-    document.querySelectorAll("ytd-rich-section-renderer").forEach((section) => {
-      if (section.querySelector('a[href^="/shorts/"], a[href="/shorts"]')) {
-        section.remove();
-      }
-    });
-
-    // 4) Remove any shelf/section whose visible header text is exactly "Shorts"
-    // This catches the Search "Shorts" shelf even when links are /watch?v=...
+    // Remove Shorts shelves (these show up on home/search sometimes)
     document
-      .querySelectorAll("ytd-shelf-renderer, ytd-rich-section-renderer, ytd-reel-shelf-renderer")
-      .forEach((el) => {
-        const titleEl =
-          el.querySelector("#title") ||
-          el.querySelector("h2") ||
-          el.querySelector("yt-formatted-string");
+      .querySelectorAll("ytd-reel-shelf-renderer, ytd-reel-item-renderer")
+      .forEach((el) => el.remove());
 
-        const headerText = (titleEl?.textContent || "").trim().toLowerCase();
-        if (headerText === "shorts") {
-          el.remove();
-        }
-      });
+    // Remove shelves/sections whose header is exactly "Shorts"
+    document.querySelectorAll("ytd-shelf-renderer, ytd-rich-section-renderer").forEach((el) => {
+      const titleEl =
+        el.querySelector("#title") ||
+        el.querySelector("h2") ||
+        el.querySelector("yt-formatted-string");
 
-    // 5) If user navigates to /shorts directly, bounce to home
+      const title = (titleEl?.textContent || "").trim().toLowerCase();
+      if (title === "shorts") el.remove();
+    });
+
+    // If user navigates to /shorts directly, bounce to home
     if (location.pathname.startsWith("/shorts")) {
       location.replace("https://www.youtube.com/");
     }
   }
 
-  // ---------- Intent Gate ----------
+  // --- Intent gate on Home
   function ensureIntentGate() {
     if (!SETTINGS.useIntentGateOnHome) return;
     if (!isYouTubeHome()) return;
@@ -93,7 +93,7 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "18px"
+      padding: "18px",
     });
 
     const card = document.createElement("div");
@@ -105,7 +105,7 @@
       color: "#fff",
       border: "1px solid rgba(255,255,255,0.12)",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
     });
 
     const title = document.createElement("div");
@@ -121,7 +121,7 @@
       display: "flex",
       gap: "10px",
       flexWrap: "wrap",
-      justifyContent: "flex-end"
+      justifyContent: "flex-end",
     });
 
     const mkBtn = (label) => {
@@ -135,7 +135,7 @@
         background: "rgba(255,255,255,0.08)",
         color: "#fff",
         cursor: "pointer",
-        fontSize: "14px"
+        fontSize: "14px",
       });
       b.onmouseenter = () => (b.style.background = "rgba(255,255,255,0.14)");
       b.onmouseleave = () => (b.style.background = "rgba(255,255,255,0.08)");
@@ -180,10 +180,11 @@
     document.documentElement.appendChild(overlay);
   }
 
-  // ---------- Scheduler / Observer ----------
+  // --- Scheduler / Observer (YouTube is SPA)
   let scheduled = false;
 
   const sweep = () => {
+    enforceVideoSearchFilter();
     removeShorts();
     ensureIntentGate();
   };
@@ -197,14 +198,13 @@
     });
   };
 
-  // Initial
   scheduleSweep();
 
-  // DOM changes (YouTube SPA)
-  const observer = new MutationObserver(() => scheduleSweep());
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(scheduleSweep).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 
-  // URL changes (YouTube SPA)
   let lastUrl = location.href;
   setInterval(() => {
     if (location.href !== lastUrl) {

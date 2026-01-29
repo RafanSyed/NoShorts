@@ -31,3 +31,109 @@ ytd-reel-shelf-renderer,
 ytd-reel-item-renderer {
   display: none !important;
 }
+
+
+/* ===========================
+   TIER 2: Reduce dopamine hooks
+   =========================== */
+
+/* A) Blur thumbnails everywhere (keeps layout but kills clickbait) */
+ytd-thumbnail img,
+ytd-thumbnail #thumbnail img,
+yt-image img {
+  filter: blur(10px) !important;
+  transform: scale(1.05) !important; /* prevents seeing edges when blurred */
+}
+
+/* Optional: instead of blur, you can fully hide thumbnails by using:
+ytd-thumbnail, ytd-thumbnail-renderer, yt-img-shadow { display:none !important; }
+*/
+
+/* B) Hide "Shorts" thumbnails already covered, but keep extra safety */
+a[href^="/shorts/"] ytd-thumbnail,
+a[href^="/shorts/"] ytd-thumbnail-renderer {
+  display: none !important;
+}
+
+/* C) Hide comments section (major doomscroll trap) */
+ytd-comments,
+#comments,
+ytd-comment-thread-renderer,
+ytd-item-section-renderer#sections:has(ytd-comments) {
+  display: none !important;
+}
+
+/* D) Hide related videos sidebar (suggested videos / up next) */
+#related,
+ytd-watch-next-secondary-results-renderer {
+  display: none !important;
+}
+
+/* E) Hide "End screens" that pop up in the last seconds */
+.ytp-endscreen-content,
+.ytp-ce-element,
+.ytp-ce-covering-overlay {
+  display: none !important;
+}
+
+/* ===========================
+   Thumbnails blur (strong + broad)
+   =========================== */
+
+/* Blur most YouTube thumbnail images */
+ytd-thumbnail img,
+ytd-thumbnail yt-img-shadow img,
+yt-img-shadow img,
+img.yt-core-image,
+ytd-rich-grid-media img,
+ytd-video-renderer img,
+ytd-compact-video-renderer img,
+ytd-grid-video-renderer img {
+  filter: blur(10px) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Sometimes the image is applied weirdly—blur the wrapper too */
+ytd-thumbnail,
+yt-img-shadow {
+  filter: blur(10px) !important;
+}
+
+/* ===========================
+   Thumbnails blur (idle + hover)
+   =========================== */
+
+/* Blur the whole thumbnail "box" so whatever YouTube swaps in stays blurred */
+ytd-thumbnail,
+ytd-thumbnail a#thumbnail,
+ytd-rich-grid-media #thumbnail,
+ytd-video-renderer #thumbnail,
+ytd-grid-video-renderer #thumbnail,
+ytd-compact-video-renderer #thumbnail,
+ytd-playlist-renderer #thumbnail {
+  filter: blur(10px) !important;
+  transform: scale(1.03) !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+
+/* Also blur any real images inside */
+ytd-thumbnail img,
+ytd-thumbnail yt-img-shadow img,
+yt-img-shadow img,
+img.yt-core-image {
+  filter: blur(10px) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ===========================
+   Disable hover video previews
+   =========================== */
+
+/* YouTube hover previews often render in these */
+ytd-moving-thumbnail-renderer,
+ytd-thumbnail-overlay-time-status-renderer[overlay-style="MOVING_THUMBNAIL"],
+ytd-player-inline-preview-renderer,
+ytd-inline-preview-player {
+  display: none !important;
+}
